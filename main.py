@@ -11,8 +11,6 @@ API_KEY = os.getenv("LASTFM_API_KEY")
 URL = "http://ws.audioscrobbler.com/2.0/"
 
 
-
-
 # function to search for an artist using the Spotify API
 def search_artist(name):
     spotify_results = sp.search(q=name, type="artist", limit=1)
@@ -20,13 +18,6 @@ def search_artist(name):
     if not results_list:
         return None
     return results_list[0]
-
-
-# test_result = search_artist(artist_name)
-# if test_result is None:
-#     print(f"No artist found for {artist_name}.")
-# else:
-#     print(test_result["name"])
 
 
 # function to get similar artists from the Last.fm API, returns list of similar artists, and an error message if there is one
@@ -43,11 +34,30 @@ def get_similar_artists(name):
         return None, data["message"]
     return data["similarartists"]["artist"], None
 
+
 def main():
     # ask the user for an artist name
     artist_name = ""
     while not artist_name:
         artist_name = input("Enter an artist's name: ").strip()
+
+    # Search for the artist using the Spotify API
+    artist = search_artist(artist_name)
+    if not artist:
+        print(f"No artist found for {artist_name}.")
+        return
+    print(f"Showing results for {artist['name']}")
+
+    # Find similar artists using the Last.fm API
+    similar, error = get_similar_artists(artist["name"])
+    if error:
+        print(f"Error: {error}")
+    elif not similar:
+        print(f"No similar artists found for {artist['name']}.")
+    else:
+        print(f"Similar artists to {artist['name']}:")
+        for sim_artist in similar:
+            print(sim_artist["name"])
 
 
 if __name__ == "__main__":
