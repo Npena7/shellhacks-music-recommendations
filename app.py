@@ -49,6 +49,6 @@ if st.button("Search"):
                         else:
                             info_col = st.columns(2)
                             with info_col[0]:
-                                st.metric("Listeners", artist_info["stats"]["listeners"])
+                                st.metric("Listeners", f"{int(artist_info['stats']['listeners']):,}")
                             with info_col[1]:
-                                st.metric("Playcount", artist_info["stats"]["playcount"])
+                                st.metric("Playcount", f"{int(artist_info['stats']['playcount']):,}")
