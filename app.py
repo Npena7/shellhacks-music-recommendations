@@ -42,13 +42,15 @@ if st.button("Search"):
         st.warning(f"Please enter a {search_type.lower()}'s name.")
     elif search_type == "Artist":
         # Search for the artist using the Spotify API
-        artist = search_artist(name)
+        with st.spinner("Searching for artist..."):
+            artist = search_artist(name)
         if not artist:
             st.error(f"No artist found for {name}.")
         else:
             st.caption(f"Showing results for {artist['name']}")
             st.divider()
-            main_info, info_error = get_artist_info(artist["name"])
+            with st.spinner("Loading artist info..."):
+                main_info, info_error = get_artist_info(artist["name"])
 
             left, right = st.columns([1, 2])
             # Left column: the artist's image (if available) and Spotify link
@@ -85,43 +87,50 @@ if st.button("Search"):
 
                     st.link_button("Read more on Last.fm", main_info["url"])
 
-            # Find similar artists using the Last.fm API
-            similar, error = get_similar_artists(artist["name"])
-            if error:
-                st.error(f"Error: {error}")
-            elif not similar:
-                st.info(f"No similar artists found for {artist['name']}.")
-            else:
-                st.subheader(f"Similar artists to {artist['name']}:")
-                cols = st.columns(len(similar))
-                # Display similar artists with their images and Spotify links (if available)
-                for i, sim_artist in enumerate(similar):
-                    recommendation_data = search_artist(sim_artist["name"])
-                    with cols[i]:
-                        if recommendation_data and recommendation_data["images"]:
-                            st.image(recommendation_data["images"][0]["url"], width=150)
-                        st.write(sim_artist["name"])
-                        if recommendation_data and recommendation_data["external_urls"]:
-                            st.link_button(
-                                "View on Spotify",
-                                url=recommendation_data["external_urls"]["spotify"],
-                            )
-                        artist_info, error = get_artist_info(sim_artist["name"])
-                        if error:
-                            st.warning(f"Error fetching artist info: {error}")
-                        else:
-                            with st.expander("Stats"):
-                                st.metric(
-                                    "Listeners",
-                                    f"{int(artist_info['stats']['listeners']):,}",
+            with st.spinner("Finding similar artists..."):
+                # Find similar artists using the Last.fm API
+                similar, error = get_similar_artists(artist["name"])
+                if error:
+                    st.error(f"Error: {error}")
+                elif not similar:
+                    st.info(f"No similar artists found for {artist['name']}.")
+                else:
+                    st.subheader(f"Similar artists to {artist['name']}:")
+                    cols = st.columns(len(similar))
+                    # Display similar artists with their images and Spotify links (if available)
+                    for i, sim_artist in enumerate(similar):
+                        recommendation_data = search_artist(sim_artist["name"])
+                        with cols[i]:
+                            if recommendation_data and recommendation_data["images"]:
+                                st.image(
+                                    recommendation_data["images"][0]["url"], width=150
                                 )
-                                st.metric(
-                                    "Playcount",
-                                    f"{int(artist_info['stats']['playcount']):,}",
+                            st.write(sim_artist["name"])
+                            if (
+                                recommendation_data
+                                and recommendation_data["external_urls"]
+                            ):
+                                st.link_button(
+                                    "View on Spotify",
+                                    url=recommendation_data["external_urls"]["spotify"],
                                 )
+                            artist_info, error = get_artist_info(sim_artist["name"])
+                            if error:
+                                st.warning(f"Error fetching artist info: {error}")
+                            else:
+                                with st.expander("Stats"):
+                                    st.metric(
+                                        "Listeners",
+                                        f"{int(artist_info['stats']['listeners']):,}",
+                                    )
+                                    st.metric(
+                                        "Playcount",
+                                        f"{int(artist_info['stats']['playcount']):,}",
+                                    )
     else:
         # Search for the song using the Spotify API
-        track = search_track(name)
+        with st.spinner("Searching for song..."):
+            track = search_track(name)
         if not track:
             st.error(f"No song found for {name}.")
         else:
@@ -133,7 +142,8 @@ if st.button("Search"):
 
             st.caption(f"Showing results for {track['name']} by {main_artist}")
             st.divider()
-            main_info, info_error = get_track_info(track["name"], main_artist)
+            with st.spinner("Loading song info..."):
+                main_info, info_error = get_track_info(track["name"], main_artist)
 
             left, right = st.columns([1, 2])
             # Left column: the album cover (if available) and Spotify link
@@ -167,48 +177,61 @@ if st.button("Search"):
 
                     # not every song has a wiki, so check before using it
                     if "wiki" in main_info:
-                        summary = main_info["wiki"]["summary"].split("<a href")[0].strip()
+                        summary = (
+                            main_info["wiki"]["summary"].split("<a href")[0].strip()
+                        )
                         if summary:
                             st.write(summary + "...")
 
                     st.link_button("Read more on Last.fm", main_info["url"])
 
-            # Find similar songs using the Last.fm API
-            similar, error = get_similar_tracks(track["name"], main_artist)
-            if error:
-                st.error(f"Error: {error}")
-            elif not similar:
-                st.info(f"No similar songs found for {track['name']}.")
-            else:
-                st.subheader(f"Similar songs to {track['name']}:")
-                cols = st.columns(len(similar))
-                # Display similar songs with their album covers and Spotify links (if available)
-                for i, sim_track in enumerate(similar):
-                    sim_artist = sim_track["artist"]["name"]
-                    recommendation_data = search_track(sim_track["name"], sim_artist)
-                    with cols[i]:
-                        if recommendation_data and recommendation_data["album"]["images"]:
-                            st.image(
-                                recommendation_data["album"]["images"][0]["url"],
-                                width=150,
-                            )
-                        st.write(f"**{sim_track['name']}**")
-                        st.write(sim_artist)
-                        if recommendation_data and recommendation_data["external_urls"]:
-                            st.link_button(
-                                "View on Spotify",
-                                url=recommendation_data["external_urls"]["spotify"],
-                            )
-                        track_info, error = get_track_info(sim_track["name"], sim_artist)
-                        if error:
-                            st.warning(f"Error fetching song info: {error}")
-                        else:
-                            with st.expander("Stats"):
-                                st.metric(
-                                    "Listeners",
-                                    f"{int(track_info['listeners']):,}",
+            with st.spinner("Finding similar songs..."):
+                # Find similar songs using the Last.fm API
+                similar, error = get_similar_tracks(track["name"], main_artist)
+                if error:
+                    st.error(f"Error: {error}")
+                elif not similar:
+                    st.info(f"No similar songs found for {track['name']}.")
+                else:
+                    st.subheader(f"Similar songs to {track['name']}:")
+                    cols = st.columns(len(similar))
+                    # Display similar songs with their album covers and Spotify links (if available)
+                    for i, sim_track in enumerate(similar):
+                        sim_artist = sim_track["artist"]["name"]
+                        recommendation_data = search_track(
+                            sim_track["name"], sim_artist
+                        )
+                        with cols[i]:
+                            if (
+                                recommendation_data
+                                and recommendation_data["album"]["images"]
+                            ):
+                                st.image(
+                                    recommendation_data["album"]["images"][0]["url"],
+                                    width=150,
                                 )
-                                st.metric(
-                                    "Playcount",
-                                    f"{int(track_info['playcount']):,}",
+                            st.write(f"**{sim_track['name']}**")
+                            st.write(sim_artist)
+                            if (
+                                recommendation_data
+                                and recommendation_data["external_urls"]
+                            ):
+                                st.link_button(
+                                    "View on Spotify",
+                                    url=recommendation_data["external_urls"]["spotify"],
                                 )
+                            track_info, error = get_track_info(
+                                sim_track["name"], sim_artist
+                            )
+                            if error:
+                                st.warning(f"Error fetching song info: {error}")
+                            else:
+                                with st.expander("Stats"):
+                                    st.metric(
+                                        "Listeners",
+                                        f"{int(track_info['listeners']):,}",
+                                    )
+                                    st.metric(
+                                        "Playcount",
+                                        f"{int(track_info['playcount']):,}",
+                                    )

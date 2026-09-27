@@ -2,6 +2,7 @@ import os
 
 import requests
 import spotipy
+import streamlit as st
 from dotenv import load_dotenv
 from spotipy.oauth2 import SpotifyClientCredentials
 
@@ -14,6 +15,7 @@ URL = "http://ws.audioscrobbler.com/2.0/"
 
 
 # function to search for an artist using the Spotify API
+@st.cache_data(show_spinner=False)
 def search_artist(name):
     spotify_results = sp.search(q=name, type="artist", limit=1)
     results_list = spotify_results["artists"]["items"]
@@ -23,6 +25,7 @@ def search_artist(name):
 
 
 # function to get similar artists from the Last.fm API, returns list of similar artists, and an error message if there is one
+@st.cache_data(show_spinner=False)
 def get_similar_artists(name):
     params = {
         "method": "artist.getSimilar",
@@ -37,6 +40,7 @@ def get_similar_artists(name):
     return data["similarartists"]["artist"], None
 
 # get artist info from last.fm api
+@st.cache_data(show_spinner=False)
 def get_artist_info(name):
     params = {
         "method": "artist.getInfo",
@@ -51,6 +55,7 @@ def get_artist_info(name):
 
 
 # function to search for a song using the Spotify API, optionally narrowed down by artist
+@st.cache_data(show_spinner=False)
 def search_track(name, artist=None):
     query = name
     if artist:
@@ -68,6 +73,7 @@ def search_track(name, artist=None):
 
 
 # get similar songs from the Last.fm API, needs the artist too since many songs share names
+@st.cache_data(show_spinner=False)
 def get_similar_tracks(track, artist):
     params = {
         "method": "track.getSimilar",
@@ -85,6 +91,7 @@ def get_similar_tracks(track, artist):
 
 
 # get song info (listeners, plays, tags, wiki) from the Last.fm API
+@st.cache_data(show_spinner=False)
 def get_track_info(track, artist):
     params = {
         "method": "track.getInfo",
