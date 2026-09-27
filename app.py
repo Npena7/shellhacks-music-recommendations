@@ -36,7 +36,9 @@ if st.button("Search"):
             with left:
                 if artist["images"]:
                     st.image(artist["images"][0]["url"], width="stretch")
-                st.link_button("View on Spotify", url=artist["external_urls"]["spotify"])
+                st.link_button(
+                    "View on Spotify", url=artist["external_urls"]["spotify"]
+                )
 
             # Right column: name, Last.fm stats, tags, and bio
             with right:
@@ -90,5 +92,11 @@ if st.button("Search"):
                             st.warning(f"Error fetching artist info: {error}")
                         else:
                             with st.expander("Stats"):
-                                st.metric("Listeners", f"{int(artist_info['stats']['listeners']):,}")
-                                st.metric("Playcount", f"{int(artist_info['stats']['playcount']):,}")
+                                st.metric(
+                                    "Listeners",
+                                    f"{int(artist_info['stats']['listeners']):,}",
+                                )
+                                st.metric(
+                                    "Playcount",
+                                    f"{int(artist_info['stats']['playcount']):,}",
+                                )
