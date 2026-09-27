@@ -50,16 +50,21 @@ def show_recommendation_stats(match, listeners=None, playcount=None):
 
 st.title("Sonar")
 st.caption("Ping an artist or song to discover what's nearby.")
-# let the user choose whether to search for an artist or a song
-search_type = st.radio("Search for", ["Artist", "Song"], horizontal=True)
-# ask the user for an artist's or song's name
-if search_type == "Artist":
-    name = st.text_input("Enter an artist's name:").strip()
-else:
-    name = st.text_input("Enter a song's name:").strip()
+
+# keep the search controls in the left half so the input doesn't stretch across the wide page
+search_col, _ = st.columns(2)
+with search_col:
+    # let the user choose whether to search for an artist or a song
+    search_type = st.radio("Search for", ["Artist", "Song"], horizontal=True)
+    # ask the user for an artist's or song's name
+    if search_type == "Artist":
+        name = st.text_input("Enter an artist's name:").strip()
+    else:
+        name = st.text_input("Enter a song's name:").strip()
+    search_clicked = st.button("Search")
 
 
-if st.button("Search"):
+if search_clicked:
     if not name:
         st.warning(f"Please enter a {search_type.lower()}'s name.")
     elif search_type == "Artist":
