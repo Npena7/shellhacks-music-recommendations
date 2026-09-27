@@ -5,6 +5,8 @@ import spotipy
 from dotenv import load_dotenv
 from spotipy.oauth2 import SpotifyClientCredentials
 
+from pprint import pprint
+
 load_dotenv()
 sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials())
 API_KEY = os.getenv("LASTFM_API_KEY")
@@ -34,6 +36,19 @@ def get_similar_artists(name):
         return None, data["message"]
     return data["similarartists"]["artist"], None
 
+# get artist info from last.fm api
+def get_artist_info(name):
+    params = {
+        "method": "artist.getInfo",
+        "artist": name,
+        "api_key": API_KEY,
+        "format": "json",
+    }
+    data = requests.get(URL, params=params).json()
+    if "error" in data:
+        return None, data["message"]
+    return data["artist"], None
+
 
 def main():
     # ask the user for an artist name
@@ -58,6 +73,8 @@ def main():
         print(f"Similar artists to {artist['name']}:")
         for sim_artist in similar:
             print(sim_artist["name"])
+                
+
 
 
 if __name__ == "__main__":
