@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 
 from main import (
     get_artist_info,
@@ -190,6 +191,13 @@ if current:
 
                     st.link_button("Read more on Last.fm", main_info["url"])
 
+                # Spotify's embedded player with the artist's top 10 songs
+                # (30-second previews, or full songs if logged in to Spotify in the browser)
+                components.iframe(
+                    f"https://open.spotify.com/embed/artist/{artist['id']}",
+                    height=352,
+                )
+
             with st.spinner("Finding similar artists..."):
                 # Find similar artists using the Last.fm API
                 similar, error = get_similar_artists(artist["name"])
@@ -271,6 +279,11 @@ if current:
                 st.write(f"**Artist:** {', '.join(artist_names)}")
                 st.write(f"**Album:** {track['album']['name']}")
                 st.write(f"**Duration:** {format_duration(track['duration_ms'])}")
+                # compact Spotify player for this song
+                components.iframe(
+                    f"https://open.spotify.com/embed/track/{track['id']}",
+                    height=152,
+                )
                 if info_error:
                     st.warning("Stats unavailable")
                 else:
