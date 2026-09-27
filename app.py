@@ -1,6 +1,6 @@
 import streamlit as st
 
-from main import search_artist, get_similar_artists
+from main import get_similar_artists, search_artist
 
 st.title("Music Discovery")
 # ask the user for an artist's name
@@ -30,5 +30,12 @@ if st.button("Search"):
                 st.info(f"No similar artists found for {artist['name']}.")
             else:
                 st.subheader(f"Similar artists to {artist['name']}:")
+                cols = st.columns(len(similar))
                 for sim_artist in similar:
-                    st.write(sim_artist["name"])
+                    recommendation_data = search_artist(sim_artist["name"])
+                    with cols[similar.index(sim_artist)]:
+                        if recommendation_data["images"]:
+                            st.image(recommendation_data["images"][0]["url"], width=150)
+                        st.write(sim_artist["name"])
+                        st.link_button("View on Spotify", url=recommendation_data["external_urls"]["spotify"])
+                        
