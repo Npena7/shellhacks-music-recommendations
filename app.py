@@ -46,7 +46,8 @@ if st.button("Search"):
         if not artist:
             st.error(f"No artist found for {name}.")
         else:
-            st.success(f"Showing results for {artist['name']}")
+            st.caption(f"Showing results for {artist['name']}")
+            st.divider()
             main_info, info_error = get_artist_info(artist["name"])
 
             left, right = st.columns([1, 2])
@@ -130,7 +131,8 @@ if st.button("Search"):
             for track_artist in track["artists"]:
                 artist_names.append(track_artist["name"])
 
-            st.success(f"Showing results for {track['name']} by {main_artist}")
+            st.caption(f"Showing results for {track['name']} by {main_artist}")
+            st.divider()
             main_info, info_error = get_track_info(track["name"], main_artist)
 
             left, right = st.columns([1, 2])
