@@ -133,7 +133,7 @@ if st.button("Search"):
                         with cols[i]:
                             if recommendation_data and recommendation_data["images"]:
                                 st.image(
-                                    recommendation_data["images"][0]["url"], width=150
+                                    recommendation_data["images"][0]["url"], width="stretch"
                                 )
                             st.write(f"**{sim_artist['name']}**")
                             artist_info, error = get_artist_info(sim_artist["name"])
@@ -242,7 +242,7 @@ if st.button("Search"):
                             ):
                                 st.image(
                                     recommendation_data["album"]["images"][0]["url"],
-                                    width=150,
+                                    width="stretch",
                                 )
                             st.write(f"**{sim_track['name']}**")
                             st.write(sim_artist)
