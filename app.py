@@ -17,7 +17,11 @@ if st.button("Search"):
             st.error(f"No artist found for {name}.")
         else:
             st.success(f"Showing results for {artist['name']}")
-        
+
+            # Display the artist's image if available
+            if artist["images"]:
+                st.image(artist["images"][0]["url"], width=300)
+            st.link_button("View on Spotify", url=artist["external_urls"]["spotify"])
             # Find similar artists using the Last.fm API
             similar, error = get_similar_artists(artist["name"])
             if error:
