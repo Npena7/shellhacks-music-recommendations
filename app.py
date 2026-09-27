@@ -1,6 +1,6 @@
 import streamlit as st
 
-from main import get_similar_artists, search_artist
+from main import get_similar_artists, search_artist, get_artist_info
 
 st.title("Music Discovery")
 # ask the user for an artist's name
@@ -43,3 +43,12 @@ if st.button("Search"):
                                 "View on Spotify",
                                 url=recommendation_data["external_urls"]["spotify"],
                             )
+                        artist_info, error = get_artist_info(sim_artist["name"])
+                        if error:
+                            st.warning(f"Error fetching artist info: {error}")
+                        else:
+                            info_col = st.columns(2)
+                            with info_col[0]:
+                                st.metric("Listeners", artist_info["stats"]["listeners"])
+                            with info_col[1]:
+                                st.metric("Playcount", artist_info["stats"]["playcount"])
