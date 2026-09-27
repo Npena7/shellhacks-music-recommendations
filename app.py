@@ -10,6 +10,13 @@ from main import (
 )
 
 
+# tooltip for Last.fm stats so viewers don't mistake them for Spotify streams
+LASTFM_STATS_HELP = (
+    "From Last.fm, counting people who track their listening with Last.fm. "
+    "These are not Spotify stream counts."
+)
+
+
 # shorten large numbers for display, e.g. 4423629 -> "4.4M"
 def format_number(n):
     if n >= 1_000_000_000:
@@ -82,9 +89,17 @@ if st.button("Search"):
                     playcount = int(main_info["stats"]["playcount"])
                     c1, c2 = st.columns(2)
                     with c1:
-                        st.metric("Listeners", format_number(listeners))
+                        st.metric(
+                            "Last.fm listeners",
+                            format_number(listeners),
+                            help=LASTFM_STATS_HELP,
+                        )
                     with c2:
-                        st.metric("Plays", format_number(playcount))
+                        st.metric(
+                            "Last.fm plays",
+                            format_number(playcount),
+                            help=LASTFM_STATS_HELP,
+                        )
 
                     tags = []
                     for tag in main_info["tags"]["tag"]:
@@ -107,6 +122,7 @@ if st.button("Search"):
                     st.info(f"No similar artists found for {artist['name']}.")
                 else:
                     st.subheader(f"Similar artists to {artist['name']}:")
+                    st.caption("Recommendations, match scores, and stats from Last.fm")
                     cols = st.columns(len(similar))
                     # Display similar artists with their images and Spotify links (if available)
                     for i, sim_artist in enumerate(similar):
@@ -171,9 +187,17 @@ if st.button("Search"):
                     playcount = int(main_info["playcount"])
                     c1, c2 = st.columns(2)
                     with c1:
-                        st.metric("Listeners", format_number(listeners))
+                        st.metric(
+                            "Last.fm listeners",
+                            format_number(listeners),
+                            help=LASTFM_STATS_HELP,
+                        )
                     with c2:
-                        st.metric("Plays", format_number(playcount))
+                        st.metric(
+                            "Last.fm plays",
+                            format_number(playcount),
+                            help=LASTFM_STATS_HELP,
+                        )
 
                     tags = []
                     for tag in main_info["toptags"]["tag"]:
@@ -200,6 +224,7 @@ if st.button("Search"):
                     st.info(f"No similar songs found for {track['name']}.")
                 else:
                     st.subheader(f"Similar songs to {track['name']}:")
+                    st.caption("Recommendations, match scores, and stats from Last.fm")
                     cols = st.columns(len(similar))
                     # Display similar songs with their album covers and Spotify links (if available)
                     for i, sim_track in enumerate(similar):
