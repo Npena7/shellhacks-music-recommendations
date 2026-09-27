@@ -6,6 +6,8 @@ Sonar is a music discovery app. Search for an artist or a song, and it finds sim
 
 Built at **ShellHacks 2026**.
 
+**[▶ Try it live: sonar-music.streamlit.app](https://sonar-music.streamlit.app/)**
+
 ![Similar artists to Mac DeMarco with match scores and Explore buttons](assets/recommendations.png)
 
 ## Features
