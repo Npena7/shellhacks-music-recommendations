@@ -48,6 +48,54 @@ def show_recommendation_stats(match, listeners=None, playcount=None):
         )
 
 
+#  make a recommendation the new search and add it to the trail
+def explore(search_type, name, artist=None):
+    item = {"type": search_type, "name": name, "artist": artist}
+    st.session_state.trail.append(item)
+    st.session_state.current = item
+    st.session_state.scroll_to_top = True
+
+
+#  go back to an earlier step and drop everything after it
+def jump_to(index):
+    st.session_state.trail = st.session_state.trail[: index + 1]
+    st.session_state.current = st.session_state.trail[index]
+    st.session_state.scroll_to_top = True
+
+
+# Streamlit keeps the scroll position on reruns, so after exploring from the bottom
+# of the page, scroll back up so the new artist/song profile is visible
+def scroll_to_top():
+    # a changing number makes Streamlit treat it as new HTML, so the script runs every time
+    st.session_state.scroll_count = st.session_state.get("scroll_count", 0) + 1
+    st.html(
+        f"<script>/* {st.session_state.scroll_count} */"
+        "document.querySelector('[data-testid=\"stMain\"]')"
+        ".scrollTo({top: 0});</script>",
+        unsafe_allow_javascript=True,
+    )
+
+
+# show the path the user has explored
+def show_trail():
+    trail = st.session_state.trail
+    if len(trail) < 2:
+        return
+    with st.container(horizontal=True, vertical_alignment="center", gap="small"):
+        for i, item in enumerate(trail):
+            if i > 0:
+                st.markdown("→")
+            # the last step is where the user is now, so it isn't clickable
+            st.button(
+                item["name"],
+                key=f"trail_{i}",
+                type="tertiary",
+                on_click=jump_to,
+                args=(i,),
+                disabled=i == len(trail) - 1,
+            )
+
+
 st.title("Sonar")
 st.caption("Ping an artist or song to discover what's nearby.")
 
@@ -63,18 +111,39 @@ with search_col:
         name = st.text_input("Enter a song's name:").strip()
     search_clicked = st.button("Search")
 
+# session_state keeps values between reruns (every button click reruns the whole script),
+# so the results stay on screen after clicking Explore or a breadcrumb
+if "current" not in st.session_state:
+    st.session_state.current = None
+    st.session_state.trail = []
 
 if search_clicked:
     if not name:
         st.warning(f"Please enter a {search_type.lower()}'s name.")
-    elif search_type == "Artist":
+        st.session_state.current = None
+    else:
+        # a typed search starts a new trail
+        st.session_state.current = {"type": search_type, "name": name, "artist": None}
+        st.session_state.trail = []
+
+current = st.session_state.current
+if st.session_state.pop("scroll_to_top", False):
+    scroll_to_top()
+if current:
+    if current["type"] == "Artist":
         # Search for the artist using the Spotify API
         with st.spinner("Searching for artist..."):
-            artist = search_artist(name)
+            artist = search_artist(current["name"])
         if not artist:
-            st.error(f"No artist found for {name}.")
+            st.error(f"No artist found for {current['name']}.")
         else:
+            # a typed search starts the trail with the artist Spotify found
+            if not st.session_state.trail:
+                st.session_state.trail.append(
+                    {"type": "Artist", "name": artist["name"], "artist": None}
+                )
             st.divider()
+            show_trail()
             with st.spinner("Loading artist info..."):
                 main_info, info_error = get_artist_info(artist["name"])
 
@@ -150,6 +219,14 @@ if search_clicked:
                                     int(artist_info["stats"]["listeners"]),
                                     int(artist_info["stats"]["playcount"]),
                                 )
+                            st.button(
+                                "Explore",
+                                key=f"explore_{i}",
+                                type="primary",
+                                icon=":material/travel_explore:",
+                                on_click=explore,
+                                args=("Artist", sim_artist["name"]),
+                            )
                             if (
                                 recommendation_data
                                 and recommendation_data["external_urls"]
@@ -159,11 +236,11 @@ if search_clicked:
                                     url=recommendation_data["external_urls"]["spotify"],
                                 )
     else:
-        # Search for the song using the Spotify API
+        # Search for the song using the Spotify API (explored songs also know their artist)
         with st.spinner("Searching for song..."):
-            track = search_track(name)
+            track = search_track(current["name"], current["artist"])
         if not track:
-            st.error(f"No song found for {name}.")
+            st.error(f"No song found for {current['name']}.")
         else:
             # Last.fm needs the song and its main artist to find the right track
             main_artist = track["artists"][0]["name"]
@@ -171,7 +248,13 @@ if search_clicked:
             for track_artist in track["artists"]:
                 artist_names.append(track_artist["name"])
 
+            # a typed search starts the trail with the song Spotify found
+            if not st.session_state.trail:
+                st.session_state.trail.append(
+                    {"type": "Song", "name": track["name"], "artist": main_artist}
+                )
             st.divider()
+            show_trail()
             with st.spinner("Loading song info..."):
                 main_info, info_error = get_track_info(track["name"], main_artist)
 
@@ -262,6 +345,14 @@ if search_clicked:
                                     int(track_info["listeners"]),
                                     int(track_info["playcount"]),
                                 )
+                            st.button(
+                                "Explore",
+                                key=f"explore_{i}",
+                                type="primary",
+                                icon=":material/travel_explore:",
+                                on_click=explore,
+                                args=("Song", sim_track["name"], sim_artist),
+                            )
                             if (
                                 recommendation_data
                                 and recommendation_data["external_urls"]
