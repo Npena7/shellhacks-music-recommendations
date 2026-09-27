@@ -27,6 +27,18 @@ def format_duration(ms):
     return f"{total_seconds // 60}:{total_seconds % 60:02d}"
 
 
+# show a recommendation's match score as a bar, then its listeners and plays as a small caption
+def show_recommendation_stats(match, listeners=None, playcount=None):
+    st.progress(match, text=f"{match:.0%} match")
+    if listeners is None:
+        st.caption("Stats unavailable")
+    else:
+        st.caption(
+            f":material/person: {format_number(listeners)} listeners  \n"
+            f":material/play_arrow: {format_number(playcount)} plays"
+        )
+
+
 st.title("Music Discovery")
 # let the user choose whether to search for an artist or a song
 search_type = st.radio("Search for", ["Artist", "Song"], horizontal=True)
@@ -105,7 +117,16 @@ if st.button("Search"):
                                 st.image(
                                     recommendation_data["images"][0]["url"], width=150
                                 )
-                            st.write(sim_artist["name"])
+                            st.write(f"**{sim_artist['name']}**")
+                            artist_info, error = get_artist_info(sim_artist["name"])
+                            if error:
+                                show_recommendation_stats(float(sim_artist["match"]))
+                            else:
+                                show_recommendation_stats(
+                                    float(sim_artist["match"]),
+                                    int(artist_info["stats"]["listeners"]),
+                                    int(artist_info["stats"]["playcount"]),
+                                )
                             if (
                                 recommendation_data
                                 and recommendation_data["external_urls"]
@@ -114,19 +135,6 @@ if st.button("Search"):
                                     "View on Spotify",
                                     url=recommendation_data["external_urls"]["spotify"],
                                 )
-                            artist_info, error = get_artist_info(sim_artist["name"])
-                            if error:
-                                st.warning(f"Error fetching artist info: {error}")
-                            else:
-                                with st.expander("Stats"):
-                                    st.metric(
-                                        "Listeners",
-                                        f"{int(artist_info['stats']['listeners']):,}",
-                                    )
-                                    st.metric(
-                                        "Playcount",
-                                        f"{int(artist_info['stats']['playcount']):,}",
-                                    )
     else:
         # Search for the song using the Spotify API
         with st.spinner("Searching for song..."):
@@ -212,6 +220,17 @@ if st.button("Search"):
                                 )
                             st.write(f"**{sim_track['name']}**")
                             st.write(sim_artist)
+                            track_info, error = get_track_info(
+                                sim_track["name"], sim_artist
+                            )
+                            if error:
+                                show_recommendation_stats(float(sim_track["match"]))
+                            else:
+                                show_recommendation_stats(
+                                    float(sim_track["match"]),
+                                    int(track_info["listeners"]),
+                                    int(track_info["playcount"]),
+                                )
                             if (
                                 recommendation_data
                                 and recommendation_data["external_urls"]
@@ -220,18 +239,3 @@ if st.button("Search"):
                                     "View on Spotify",
                                     url=recommendation_data["external_urls"]["spotify"],
                                 )
-                            track_info, error = get_track_info(
-                                sim_track["name"], sim_artist
-                            )
-                            if error:
-                                st.warning(f"Error fetching song info: {error}")
-                            else:
-                                with st.expander("Stats"):
-                                    st.metric(
-                                        "Listeners",
-                                        f"{int(track_info['listeners']):,}",
-                                    )
-                                    st.metric(
-                                        "Playcount",
-                                        f"{int(track_info['playcount']):,}",
-                                    )
