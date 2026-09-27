@@ -1,6 +1,13 @@
 import streamlit as st
 
-from main import get_similar_artists, search_artist, get_artist_info
+from main import (
+    get_artist_info,
+    get_similar_artists,
+    get_similar_tracks,
+    get_track_info,
+    search_artist,
+    search_track,
+)
 
 
 # shorten large numbers for display, e.g. 4423629 -> "4.4M"
@@ -14,15 +21,26 @@ def format_number(n):
     return str(n)
 
 
+# convert a song's length from milliseconds to minutes:seconds, e.g. 225000 -> "3:45"
+def format_duration(ms):
+    total_seconds = ms // 1000
+    return f"{total_seconds // 60}:{total_seconds % 60:02d}"
+
+
 st.title("Music Discovery")
-# ask the user for an artist's name
-name = st.text_input("Enter an artist's name:").strip()
+# let the user choose whether to search for an artist or a song
+search_type = st.radio("Search for", ["Artist", "Song"], horizontal=True)
+# ask the user for an artist's or song's name
+if search_type == "Artist":
+    name = st.text_input("Enter an artist's name:").strip()
+else:
+    name = st.text_input("Enter a song's name:").strip()
 
 
 if st.button("Search"):
     if not name:
-        st.warning("Please enter an artist's name.")
-    else:
+        st.warning(f"Please enter a {search_type.lower()}'s name.")
+    elif search_type == "Artist":
         # Search for the artist using the Spotify API
         artist = search_artist(name)
         if not artist:
@@ -99,4 +117,96 @@ if st.button("Search"):
                                 st.metric(
                                     "Playcount",
                                     f"{int(artist_info['stats']['playcount']):,}",
+                                )
+    else:
+        # Search for the song using the Spotify API
+        track = search_track(name)
+        if not track:
+            st.error(f"No song found for {name}.")
+        else:
+            # Last.fm needs the song and its main artist to find the right track
+            main_artist = track["artists"][0]["name"]
+            artist_names = []
+            for track_artist in track["artists"]:
+                artist_names.append(track_artist["name"])
+
+            st.success(f"Showing results for {track['name']} by {main_artist}")
+            main_info, info_error = get_track_info(track["name"], main_artist)
+
+            left, right = st.columns([1, 2])
+            # Left column: the album cover (if available) and Spotify link
+            with left:
+                if track["album"]["images"]:
+                    st.image(track["album"]["images"][0]["url"], width="stretch")
+                st.link_button("View on Spotify", url=track["external_urls"]["spotify"])
+
+            # Right column: song details, Last.fm stats, tags, and wiki summary
+            with right:
+                st.header(track["name"])
+                st.write(f"**Artist:** {', '.join(artist_names)}")
+                st.write(f"**Album:** {track['album']['name']}")
+                st.write(f"**Duration:** {format_duration(track['duration_ms'])}")
+                if info_error:
+                    st.warning("Stats unavailable")
+                else:
+                    listeners = int(main_info["listeners"])
+                    playcount = int(main_info["playcount"])
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        st.metric("Listeners", format_number(listeners))
+                    with c2:
+                        st.metric("Plays", format_number(playcount))
+
+                    tags = []
+                    for tag in main_info["toptags"]["tag"]:
+                        tags.append(tag["name"])
+                    if tags:
+                        st.write(f"**Tags:** {', '.join(tags)}")
+
+                    # not every song has a wiki, so check before using it
+                    if "wiki" in main_info:
+                        summary = main_info["wiki"]["summary"].split("<a href")[0].strip()
+                        if summary:
+                            st.write(summary + "...")
+
+                    st.link_button("Read more on Last.fm", main_info["url"])
+
+            # Find similar songs using the Last.fm API
+            similar, error = get_similar_tracks(track["name"], main_artist)
+            if error:
+                st.error(f"Error: {error}")
+            elif not similar:
+                st.info(f"No similar songs found for {track['name']}.")
+            else:
+                st.subheader(f"Similar songs to {track['name']}:")
+                cols = st.columns(len(similar))
+                # Display similar songs with their album covers and Spotify links (if available)
+                for i, sim_track in enumerate(similar):
+                    sim_artist = sim_track["artist"]["name"]
+                    recommendation_data = search_track(sim_track["name"], sim_artist)
+                    with cols[i]:
+                        if recommendation_data and recommendation_data["album"]["images"]:
+                            st.image(
+                                recommendation_data["album"]["images"][0]["url"],
+                                width=150,
+                            )
+                        st.write(f"**{sim_track['name']}**")
+                        st.write(sim_artist)
+                        if recommendation_data and recommendation_data["external_urls"]:
+                            st.link_button(
+                                "View on Spotify",
+                                url=recommendation_data["external_urls"]["spotify"],
+                            )
+                        track_info, error = get_track_info(sim_track["name"], sim_artist)
+                        if error:
+                            st.warning(f"Error fetching song info: {error}")
+                        else:
+                            with st.expander("Stats"):
+                                st.metric(
+                                    "Listeners",
+                                    f"{int(track_info['listeners']):,}",
+                                )
+                                st.metric(
+                                    "Playcount",
+                                    f"{int(track_info['playcount']):,}",
                                 )

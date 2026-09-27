@@ -50,6 +50,51 @@ def get_artist_info(name):
     return data["artist"], None
 
 
+# function to search for a song using the Spotify API, optionally narrowed down by artist
+def search_track(name, artist=None):
+    query = name
+    if artist:
+        query = f"track:{name} artist:{artist}"
+    spotify_results = sp.search(q=query, type="track", limit=1)
+    results_list = spotify_results["tracks"]["items"]
+    if not results_list:
+        return None
+    return results_list[0]
+
+
+# get similar songs from the Last.fm API, needs the artist too since many songs share names
+def get_similar_tracks(track, artist):
+    params = {
+        "method": "track.getSimilar",
+        "track": track,
+        "artist": artist,
+        "api_key": API_KEY,
+        "format": "json",
+        "limit": 5,
+        "autocorrect": 1,
+    }
+    data = requests.get(URL, params=params).json()
+    if "error" in data:
+        return None, data["message"]
+    return data["similartracks"]["track"], None
+
+
+# get song info (listeners, plays, tags, wiki) from the Last.fm API
+def get_track_info(track, artist):
+    params = {
+        "method": "track.getInfo",
+        "track": track,
+        "artist": artist,
+        "api_key": API_KEY,
+        "format": "json",
+        "autocorrect": 1,
+    }
+    data = requests.get(URL, params=params).json()
+    if "error" in data:
+        return None, data["message"]
+    return data["track"], None
+
+
 def main():
     # ask the user for an artist name
     artist_name = ""
