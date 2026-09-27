@@ -6,8 +6,6 @@ import streamlit as st
 from dotenv import load_dotenv
 from spotipy.oauth2 import SpotifyClientCredentials
 
-from pprint import pprint
-
 load_dotenv()
 sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials())
 API_KEY = os.getenv("LASTFM_API_KEY")
