@@ -58,6 +58,11 @@ def search_track(name, artist=None):
     spotify_results = sp.search(q=query, type="track", limit=1)
     results_list = spotify_results["tracks"]["items"]
     if not results_list:
+        # Last.fm sometimes puts "(feat. ...)" in the title when Spotify doesn't,
+        # so retry without it, but only if removing it actually changed the title
+        cleaned = name.split(" (feat.")[0]
+        if cleaned != name:
+            return search_track(cleaned, artist)
         return None
     return results_list[0]
 
