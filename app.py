@@ -9,6 +9,8 @@ from main import (
     search_track,
 )
 
+# browser tab title and icon, and use the full page width so the cards have more room
+st.set_page_config(page_title="Sonar", page_icon="🎵", layout="wide")
 
 # tooltip for Last.fm stats so viewers don't mistake them for Spotify streams
 LASTFM_STATS_HELP = (
