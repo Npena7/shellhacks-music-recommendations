@@ -47,8 +47,6 @@ if st.button("Search"):
                         if error:
                             st.warning(f"Error fetching artist info: {error}")
                         else:
-                            info_col = st.columns(2)
-                            with info_col[0]:
+                            with st.expander("Stats"):
                                 st.metric("Listeners", f"{int(artist_info['stats']['listeners']):,}")
-                            with info_col[1]:
                                 st.metric("Playcount", f"{int(artist_info['stats']['playcount']):,}")
