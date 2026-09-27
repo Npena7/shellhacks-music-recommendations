@@ -31,11 +31,15 @@ if st.button("Search"):
             else:
                 st.subheader(f"Similar artists to {artist['name']}:")
                 cols = st.columns(len(similar))
-                for sim_artist in similar:
+                # Display similar artists with their images and Spotify links (if available)
+                for i, sim_artist in enumerate(similar):
                     recommendation_data = search_artist(sim_artist["name"])
-                    with cols[similar.index(sim_artist)]:
-                        if recommendation_data["images"]:
+                    with cols[i]:
+                        if recommendation_data and recommendation_data["images"]:
                             st.image(recommendation_data["images"][0]["url"], width=150)
                         st.write(sim_artist["name"])
-                        st.link_button("View on Spotify", url=recommendation_data["external_urls"]["spotify"])
-                        
+                        if recommendation_data and recommendation_data["external_urls"]:
+                            st.link_button(
+                                "View on Spotify",
+                                url=recommendation_data["external_urls"]["spotify"],
+                            )
